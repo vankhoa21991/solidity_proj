@@ -1,6 +1,24 @@
 pragma solidity ^0.6.0;
 
 
+contract Ownable {
+    address payable _owner;
+    
+    constructor() public {
+        _owner = msg.sender;
+    }
+    
+    modifier onlyOwner() {
+        require(isOwner(), "You are not the owner");
+        _;
+    }
+    
+    function isOwner() public view returns(bool) {
+        return (msg.sender == _owner);
+    }
+    
+}
+
 contract Item {
     uint public priceInWei;
     uint public index;
@@ -22,10 +40,14 @@ contract Item {
     
         require(success, "The transaction wasn't successful, canceling");
     }
+    
+    fallback() external{
+        
+    }
 } 
     
 
-contract ItemManager{
+contract ItemManager is Ownable{
     
     enum SupplyChainState{Created, Paid, Delivered}
     
@@ -38,16 +60,16 @@ contract ItemManager{
     mapping (uint => S_Item) public items;
     uint itemIndex;
     
-    event SupplyChainStep(uint _itemIndex, uint _step);
+    event SupplyChainStep(uint _itemIndex, uint _step, address _itemAddress);
     
-    function creatItem( string memory _identifier, uint _itemPrice) public {
+    function creatItem( string memory _identifier, uint _itemPrice) public  onlyOwner{
         items[itemIndex]._identifier = _identifier;
         Item item = new Item(this, _itemPrice, itemIndex);
-        items[itemIndex]._item = item
+        items[itemIndex]._item = item;
         items[itemIndex]._itemPrice = _itemPrice;
         items[itemIndex]._state = SupplyChainState.Created;
         
-        emit SupplyChainStep(itemIndex, uint(items[itemIndex]._state));
+        emit SupplyChainStep(itemIndex, uint(items[itemIndex]._state), address(item));
         itemIndex++;
     }
     
@@ -57,14 +79,14 @@ contract ItemManager{
         
         items[_itemIndex]._state = SupplyChainState.Paid;
         
-        emit SupplyChainStep(_itemIndex, uint(items[_itemIndex]._state));
+        emit SupplyChainStep(_itemIndex, uint(items[_itemIndex]._state), address(items[_itemIndex]._item));
     }
     
-    function triggerDelivery(uint _itemIndex) public payable {
+    function triggerDelivery(uint _itemIndex) public payable onlyOwner{
         require(items[_itemIndex]._state == SupplyChainState.Paid, "Item is further in the chain");
         items[_itemIndex]._state = SupplyChainState.Delivered;
         
-        emit SupplyChainStep(_itemIndex, uint(items[_itemIndex]._state));
+        emit SupplyChainStep(_itemIndex, uint(items[_itemIndex]._state), address(items[_itemIndex]._item));
         
         
     }

@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/vankhoa21991/solidity_proj/issues"
   },
-  "homepage": "https://github.com/vankhoa21991/solidity_proj#readme"
+  "homepage": "https://github.com/vankhoa21991/solidity_proj#readme",
+  "dependencies": {
+    "node": "^12.22.7"
+  }
 }
